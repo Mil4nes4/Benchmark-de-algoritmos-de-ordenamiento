@@ -1,5 +1,9 @@
 from BubbleSort import bubble_sort
 from InsertionSort import insertion_sort
+from MergeSort import merge_sort
+from QuickSort import quick_sort
+from HeapSort import heap_sort
+from TimSort import tim_sort
 
 import timeit
 import random
@@ -7,15 +11,12 @@ import psutil
 import os
 
 def generate_random_list(size):
-#Genera una lista aleatoria de enteros"""
     return [random.randint(0, 10**5) for _ in range(size)]
 
 def generate_sorted_list(size):
-#Genera una lista ordenada de enteros"""
     return list(range(size))
 
 def generate_reversed_list(size):
-#Genera una lista ordenada en orden inverso"""
     return list(range(size, 0, -1))
 
 def measure_performance(sort_function, data):
@@ -54,14 +55,13 @@ def run_benchmark():
     """Ejecuta las pruebas de rendimiento para diferentes tamaños y tipos de listas"""
     sizes = [100, 1000, 10000]  # Para Bubble Sort, 100000 puede ser demasiado lento
     list_types = {
-        'random': generate_random_list,
-        'sorted': generate_sorted_list,
-        'reversed': generate_reversed_list
+        "random": generate_random_list,
+        "sorted": generate_sorted_list,
+        "reversed": generate_reversed_list
     }
     
     algorithms = {
-        'Bubble Sort': bubble_sort,
-        "Insertion Sort": insertion_sort
+        "Bubble Sort": bubble_sort,
     }
     
     results = {}
@@ -74,10 +74,10 @@ def run_benchmark():
                 # Generar datos
                 data = generator(size)
                 
-                # Ejecutar 10 veces (como menciona el artículo)
                 times = []
                 memories = []
                 
+                # Ejecutar 10 veces para obtener un promedio
                 for _ in range(10):
                     time, memory, _ = measure_performance(algo_func, data)
                     times.append(time)
@@ -101,7 +101,6 @@ def run_benchmark():
 if __name__ == "__main__":
     benchmark_results = run_benchmark()
     
-    # Imprimir resultados (podrías guardarlos en un archivo CSV para análisis posterior)
     for algo, algo_data in benchmark_results.items():
         print(f"\nResultados para {algo}:")
         for list_type, type_data in algo_data.items():
