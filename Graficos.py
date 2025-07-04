@@ -1,0 +1,348 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+def plot_benchmark_results(results):
+    """
+    Función para graficar los resultados del benchmark de algoritmos de ordenamiento.
+    
+    Args:
+        results (dict): Diccionario con los resultados del benchmark en la estructura:
+                       {
+                           "Algoritmo": {
+                               "tipo_lista": {
+                                   "tamaño": {
+                                       'avg_time': float,
+                                       'std_time': float,
+                                       'avg_memory_kb': float,
+                                       'std_memory_kb': float
+                                   }
+                               }
+                           }
+                       }
+    """
+    
+    # Configuración general de los gráficos
+    plt.style.use('seaborn-v0_8')
+    plt.rcParams['figure.figsize'] = (12, 8)
+    plt.rcParams['font.size'] = 12
+    
+    # Tipos de listas y tamaños
+    list_types = ['random', 'sorted', 'reversed']
+    sizes = [100, 1000, 10000, 100000]
+    
+    # Algoritmos a comparar (deberían coincidir con los del benchmark)
+    algorithms = ["BubbleSort","InsertionSort", "MergeSort", "QuickSort", "HeapSort", "TimSort"]
+    
+    # Verificar qué algoritmos están realmente en los resultados
+    available_algorithms = [algo for algo in algorithms if algo in results]
+    
+    # Colores para cada algoritmo
+    colors = plt.cm.tab10(np.linspace(0, 1, len(available_algorithms)))
+    
+    # =====================================================================
+    # Gráfico 1: Tiempo de ejecución por tamaño de lista (promedio de los 3 tipos)
+    # =====================================================================
+    plt.figure(figsize=(14, 8))
+    
+    for algo, color in zip(available_algorithms, colors):
+        avg_times = []
+        std_times = []
+        
+        for size in sizes:
+            # Calcular promedio entre los tipos de lista para este tamaño
+            times = []
+            stds = []
+            for list_type in list_types:
+                if list_type in results[algo] and size in results[algo][list_type]:
+                    times.append(results[algo][list_type][size]['avg_time'])
+                    stds.append(results[algo][list_type][size]['std_time'])
+            
+            if times:  # Si hay datos para este tamaño
+                avg_times.append(np.mean(times))
+                std_times.append(np.sqrt(sum(s**2 for s in stds)) / len(stds))  # Promedio de varianzas
+        
+        if avg_times:  # Solo graficar si hay datos
+            plt.errorbar(sizes[:len(avg_times)], avg_times, yerr=std_times, 
+                        label=algo, color=color, marker='o', linestyle='-', 
+                        linewidth=2, markersize=8, capsize=5)
+    
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('Tamaño de la lista (elementos) - Escala logarítmica')
+    plt.ylabel('Tiempo promedio de ejecución (s) - Escala logarítmica')
+    plt.title('Comparación de Tiempo de Ejecución por Algoritmo\n(Promedio de todos los tipos de listas)')
+    plt.legend()
+    plt.grid(True, which="both", ls="--")
+    plt.show()
+    
+    # =====================================================================
+    # Gráfico 2: Memoria utilizada por tamaño de lista (promedio de los 3 tipos)
+    # =====================================================================
+    plt.figure(figsize=(14, 8))
+    
+    for algo, color in zip(available_algorithms, colors):
+        avg_memories = []
+        std_memories = []
+        
+        for size in sizes:
+            # Calcular promedio entre los tipos de lista para este tamaño
+            memories = []
+            stds = []
+            for list_type in list_types:
+                if list_type in results[algo] and size in results[algo][list_type]:
+                    memories.append(results[algo][list_type][size]['avg_memory_kb'])
+                    stds.append(results[algo][list_type][size]['std_memory_kb'])
+            
+            if memories:  # Si hay datos para este tamaño
+                avg_memories.append(np.mean(memories))
+                std_memories.append(np.sqrt(sum(s**2 for s in stds)) / len(stds))  # Promedio de varianzas
+        
+        if avg_memories:  # Solo graficar si hay datos
+            plt.errorbar(sizes[:len(avg_memories)], avg_memories, yerr=std_memories, 
+                        label=algo, color=color, marker='s', linestyle='--', 
+                        linewidth=2, markersize=8, capsize=5)
+    
+    plt.xscale('log')
+    plt.xlabel('Tamaño de la lista (elementos) - Escala logarítmica')
+    plt.ylabel('Memoria promedio utilizada (KB)')
+    plt.title('Comparación de Memoria Utilizada por Algoritmo\n(Promedio de todos los tipos de listas)')
+    plt.legend()
+    plt.grid(True, which="both", ls="--")
+    plt.show()
+    
+    # =====================================================================
+    # Gráfico 3: Comparación por tipo de lista (para el mayor tamaño disponible)
+    # =====================================================================
+    max_size = max(sizes)
+    
+    for list_type in list_types:
+        plt.figure(figsize=(14, 6))
+        
+        # Verificar si este tamaño existe para este tipo de lista en algún algoritmo
+        has_data = False
+        for algo in available_algorithms:
+            if list_type in results[algo] and max_size in results[algo][list_type]:
+                has_data = True
+                break
+        
+        if not has_data:
+            # Buscar el mayor tamaño que tenga datos
+            for size in sorted(sizes, reverse=True):
+                has_data = False
+                for algo in available_algorithms:
+                    if list_type in results[algo] and size in results[algo][list_type]:
+                        has_data = True
+                        max_size = size
+                        break
+                if has_data:
+                    break
+        
+        if has_data:
+            # Gráfico de tiempo
+            plt.subplot(1, 2, 1)
+            for algo, color in zip(available_algorithms, colors):
+                if list_type in results[algo] and max_size in results[algo][list_type]:
+                    data = results[algo][list_type][max_size]
+                    plt.bar(algo, data['avg_time'], color=color, 
+                            yerr=data['std_time'], capsize=5)
+            plt.ylabel('Tiempo de ejecución (s)')
+            plt.title(f'Tiempo - {list_type.capitalize()} (n={max_size})')
+            plt.xticks(rotation=45)
+            
+            # Gráfico de memoria
+            plt.subplot(1, 2, 2)
+            for algo, color in zip(available_algorithms, colors):
+                if list_type in results[algo] and max_size in results[algo][list_type]:
+                    data = results[algo][list_type][max_size]
+                    plt.bar(algo, data['avg_memory_kb'], color=color, 
+                            yerr=data['std_memory_kb'], capsize=5)
+            plt.ylabel('Memoria utilizada (KB)')
+            plt.title(f'Memoria - {list_type.capitalize()} (n={max_size})')
+            plt.xticks(rotation=45)
+            
+            plt.tight_layout()
+            plt.show()
+    
+    # =====================================================================
+    # Gráfico 4: Heatmap de tiempos por algoritmo y tamaño (para listas aleatorias)
+    # =====================================================================
+    if 'random' in list_types:
+        # Preparar datos para el heatmap
+        heatmap_data = []
+        for algo in available_algorithms:
+            row = []
+            for size in sizes:
+                if 'random' in results[algo] and size in results[algo]['random']:
+                    row.append(results[algo]['random'][size]['avg_time'])
+                else:
+                    row.append(np.nan)
+            heatmap_data.append(row)
+        
+        # Crear DataFrame para el heatmap
+        df = pd.DataFrame(heatmap_data, index=available_algorithms, columns=sizes)
+        
+        # Filtrar columnas con al menos un valor no nulo
+        df = df.loc[:, df.notna().any(axis=0)]
+        
+        if not df.empty:
+            plt.figure(figsize=(12, 8))
+            plt.imshow(df, cmap='viridis', aspect='auto', norm='log')
+            plt.colorbar(label='Tiempo (s) - Escala logarítmica')
+            plt.xticks(range(len(df.columns)), df.columns)
+            plt.yticks(range(len(df.index)), df.index)
+            plt.xlabel('Tamaño de la lista')
+            plt.ylabel('Algoritmo')
+            plt.title('Heatmap de Tiempos de Ejecución\n(Listas Aleatorias)')
+            
+            # Añadir anotaciones
+            for i in range(len(df.index)):
+                for j in range(len(df.columns)):
+                    if not np.isnan(df.iloc[i, j]):
+                        plt.text(j, i, f"{df.iloc[i, j]:.4f}", 
+                                ha="center", va="center", color="w", fontsize=8)
+            
+            plt.show()
+
+def load_results_from_file(filename):
+    """
+    Función para cargar resultados desde un archivo (simulada, deberías implementar
+    según cómo guardes tus resultados reales)
+    """
+    # Esto es un ejemplo - deberías adaptarlo a cómo guardes tus datos
+    import json
+    with open(filename, 'r') as f:
+        results = json.load(f)
+    return results
+
+if __name__ == "__main__":
+    # Ejemplo de uso:
+    # 1. Ejecutar el benchmark y guardar resultados
+    # benchmark_results = run_benchmark()
+    
+    # 2. Cargar resultados desde archivo (si ya los tienes guardados)
+    # benchmark_results = load_results_from_file('benchmark_results.json')
+    
+    # 3. Para este ejemplo, crearemos datos de prueba
+    benchmark_results = {
+        "BubbleSort": {
+            "random": {
+                100: {"avg_time": 0.000484, "std_time": 0.000026, "avg_memory_kb": 0.890625, "std_memory_kb": 0.0},
+                1000: {"avg_time": 0.642172, "std_time": 0.033457, "avg_memory_kb": 8.074219, "std_memory_kb": 0.0},
+                10000: {"avg_time": 83.775204, "std_time": 1.962586, "avg_memory_kb": 78.386719, "std_memory_kb": 0.0}
+            },
+            "sorted": {
+                100: {"avg_time": 0.000292, "std_time": 0.000015, "avg_memory_kb": 0.890625, "std_memory_kb": 0.0},
+                1000: {"avg_time": 0.300863, "std_time": 0.004979, "avg_memory_kb": 8.074219, "std_memory_kb": 0.0},
+                10000: {"avg_time": 50.554899, "std_time": 0.220369, "avg_memory_kb": 78.386719, "std_memory_kb": 0.0}
+            },
+            "reversed": {
+                100: {"avg_time": 0.000717, "std_time": 0.000177, "avg_memory_kb": 0.890625, "std_memory_kb": 0.0},
+                1000: {"avg_time": 0.668613, "std_time": 0.004676, "avg_memory_kb": 8.074219, "std_memory_kb": 0.0},
+                10000: {"avg_time": 112.233900, "std_time": 0.940154, "avg_memory_kb": 78.386719, "std_memory_kb": 0.0}
+            }
+        },
+        "InsertionSort": {
+           "random": {
+                100: {"avg_time": 0.000162, "std_time": 0.000009, "avg_memory_kb": 0.859375, "std_memory_kb": 0.0},
+                1000: {"avg_time": 0.237254, "std_time": 0.003641, "avg_memory_kb": 7.949219, "std_memory_kb": 0.0},
+                10000: {"avg_time": 29.798460, "std_time": 0.313564, "avg_memory_kb": 78.261719, "std_memory_kb": 0.0}
+            },
+            "sorted": {
+                100: {"avg_time": 0.000023,"std_time": 0.000003,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.001905,"std_time": 0.000478,"avg_memory_kb": 7.949219,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.021720,"std_time": 0.001732,"avg_memory_kb": 78.261719,"std_memory_kb": 0.0}
+            },
+            "reversed": {
+                100: {"avg_time": 0.001174,"std_time": 0.000348,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.369291,"std_time": 0.024555,"avg_memory_kb": 7.949219,"std_memory_kb": 0.0},
+                10000: {"avg_time": 56.562833,"std_time": 1.256957,"avg_memory_kb": 78.261719,"std_memory_kb": 0.0
+                }
+            }
+        },
+        "MergeSort": {
+            "random": {
+                100: {"avg_time": 0.000243, "std_time": 0.000002, "avg_memory_kb": 2.351562 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.008943, "std_time": 0.002753, "avg_memory_kb": 23.468750 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.191314 , "std_time": 0.004404, "avg_memory_kb": 234.562500, "std_memory_kb": 0},
+                100000: {"avg_time": 2.972735, "std_time": 0.035711 , "avg_memory_kb": 2344.039062, "std_memory_kb": 0}
+            },
+            "sorted": {
+                100: {"avg_time": 0.000315, "std_time": 0.000040, "avg_memory_kb": 2.351562 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.006458, "std_time": 0.000398, "avg_memory_kb": 23.468750 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.177929 , "std_time": 0.001913, "avg_memory_kb": 234.562500, "std_memory_kb": 0},
+                100000: {"avg_time": 2.902670, "std_time": 0.032817 , "avg_memory_kb": 2344.039062, "std_memory_kb": 0}
+            },
+            "reversed": {
+                100: {"avg_time": 0.000229, "std_time": 0.000026, "avg_memory_kb": 2.351562 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.005984, "std_time": 0.000371, "avg_memory_kb": 23.468750 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.168747  , "std_time": 0.001714, "avg_memory_kb": 234.562500, "std_memory_kb": 0},
+                100000: {"avg_time": 2.778870, "std_time": 0.032016 , "avg_memory_kb": 2344.039062, "std_memory_kb": 0}
+            }
+        },
+        "QuickSort": {
+            "random": {
+                100: {"avg_time": 0.000241,"std_time": 0.000008,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.013313,"std_time": 0.000754,"avg_memory_kb": 9.212891,"std_memory_kb": 0.10},
+                10000: {"avg_time": 0.204102,"std_time": 0.004140,"avg_memory_kb": 80.087891,"std_memory_kb": 0.12},
+                100000: {"avg_time": 2.670086,"std_time": 0.027827,"avg_memory_kb": 783.800781,"std_memory_kb": 0.06}
+                },
+            "sorted": {
+                100: {"avg_time": 0.000310,"std_time": 0.000027,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.013939,"std_time": 0.000664,"avg_memory_kb": 9.089844,"std_memory_kb": 0.07},
+                10000: {"avg_time": 0.203219,"std_time": 0.006567,"avg_memory_kb": 80.111328,"std_memory_kb": 0.10},
+                100000: {"avg_time": 2.580608,"std_time": 0.064566,"avg_memory_kb": 783.839844,"std_memory_kb": 0.10}
+            },
+            "reversed": {
+                100: {"avg_time": 0.000242,"std_time": 0.000033,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.012937,"std_time": 0.000391,"avg_memory_kb": 9.181641,"std_memory_kb": 0.11},
+                10000: {"avg_time": 0.199857,"std_time": 0.004612,"avg_memory_kb": 80.164062,"std_memory_kb": 0.11},
+                100000: {"avg_time": 2.570012,"std_time": 0.062668,"avg_memory_kb": 783.833984,"std_memory_kb": 0.04}
+            }
+        },
+        "HeapSort": {
+            "random": {
+                100: {"avg_time": 0.000145,"std_time": 0.000002,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.008012,"std_time": 0.000262,"avg_memory_kb": 8.121094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.155017,"std_time": 0.001521,"avg_memory_kb": 78.683594,"std_memory_kb": 0.0},
+                100000: {"avg_time": 2.496411,"std_time": 0.035682,"avg_memory_kb": 781.996094,"std_memory_kb": 0.0}
+            },
+            "sorted": {
+                100: {"avg_time": 0.000162,"std_time": 0.000001,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.009225,"std_time": 0.000218,"avg_memory_kb": 8.121094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.173144,"std_time": 0.001246,"avg_memory_kb": 78.683594,"std_memory_kb": 0.0},
+                100000: {"avg_time": 2.599946,"std_time": 0.025884,"avg_memory_kb": 781.996094,"std_memory_kb": 0.0}
+            },
+            "reversed": {
+                100: {"avg_time": 0.000153,"std_time": 0.000022,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.006719,"std_time": 0.000268,"avg_memory_kb": 8.121094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.144183,"std_time": 0.000820,"avg_memory_kb": 78.683594,"std_memory_kb": 0.0},
+                100000: {"avg_time": 2.264706,"std_time": 0.018742,"avg_memory_kb": 781.996094,"std_memory_kb": 0.0}
+            }
+        },
+        "TimSort": {
+            "random": {
+                100: {"avg_time": 0.000103,"std_time": 0.000002,"avg_memory_kb": 1.593750,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.013615,"std_time": 0.000316,"avg_memory_kb": 15.996094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.230496,"std_time": 0.007972,"avg_memory_kb": 156.621094,"std_memory_kb": 0.0},
+                100000: {"avg_time": 2.811472,"std_time": 0.086046,"avg_memory_kb": 1562.871094,"std_memory_kb": 0.0}
+            },
+            "sorted": {
+                100: {"avg_time": 0.000062,"std_time": 0.000011,"avg_memory_kb": 1.593750,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.006122,"std_time": 0.000249,"avg_memory_kb": 15.996094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.133620,"std_time": 0.000659,"avg_memory_kb": 156.621094,"std_memory_kb": 0.0},
+                100000: {"avg_time": 1.890065,"std_time": 0.028225,"avg_memory_kb": 1562.871094,"std_memory_kb": 0.0}
+            },
+            "reversed": {
+                100: {"avg_time": 0.000154,"std_time": 0.000001,"avg_memory_kb": 1.593750,"std_memory_kb": 0.0},
+                1000: {"avg_time": 0.021831,"std_time": 0.000547,"avg_memory_kb": 15.996094,"std_memory_kb": 0.0},
+                10000: {"avg_time": 0.326647,"std_time": 0.001399,"avg_memory_kb": 156.621094,"std_memory_kb": 0.0},
+                100000: {"avg_time": 3.883152,"std_time": 0.052388,"avg_memory_kb": 1562.871094,"std_memory_kb": 0.0}
+            }
+        }     
+    }
+
+
+    
+# Generar los gráficos
+plot_benchmark_results(benchmark_results)
