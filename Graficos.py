@@ -215,6 +215,33 @@ def load_results_from_file(filename):
         results = json.load(f)
     return results
 
+def plot_algorithms_by_size(results, sizes, list_types):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    algorithms = [algo for algo in results.keys()]
+    colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms)))
+
+    for list_type in list_types:
+        for size in sizes:
+            avg_times = []
+            std_times = []
+            for algo in algorithms:
+                if list_type in results[algo] and size in results[algo][list_type]:
+                    avg_times.append(results[algo][list_type][size]['avg_time'])
+                    std_times.append(results[algo][list_type][size]['std_time'])
+                else:
+                    avg_times.append(np.nan)
+                    std_times.append(0)
+            plt.figure(figsize=(10, 6))
+            plt.errorbar(algorithms, avg_times, yerr=std_times, fmt='-o', color='b', capsize=5)
+            plt.ylabel('Tiempo promedio de ejecución (s)')
+            plt.xlabel('Algoritmo')
+            plt.title(f'Tiempo de ejecución para tamaño {size} ({list_type})')
+            plt.grid(True, linestyle='--')
+            plt.tight_layout()
+            plt.show()
+
 if __name__ == "__main__":
     # Ejemplo de uso:
     # 1. Ejecutar el benchmark y guardar resultados
@@ -343,6 +370,157 @@ if __name__ == "__main__":
     }
 
 
+def plot_comparison_by_size_and_type(results):
+    # Configuración general de los gráficos
+    plt.style.use('seaborn-v0_8')
+    plt.rcParams['figure.figsize'] = (14, 10)
+    plt.rcParams['font.size'] = 12
+    
+    # Tipos de listas, tamaños y algoritmos
+    list_types = ['random', 'sorted', 'reversed']
+    sizes = [100, 1000, 10000, 100000]
+    algorithms = ["BubbleSort", "InsertionSort", "MergeSort", 
+                  "QuickSort", "HeapSort", "TimSort"]
+    
+    # Verificar qué algoritmos están realmente en los resultados
+    available_algorithms = [algo for algo in algorithms if algo in results]
+    
+    # Colores para cada algoritmo
+    colors = plt.cm.tab10(np.linspace(0, 1, len(available_algorithms)))
+    
+    # =====================================================================
+    # Gráficos por tipo de lista
+    # =====================================================================
+    for list_type in list_types:
+        # Crear figura con subgráficos para tiempo y memoria
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+        fig.suptitle(f'Comparación de Algoritmos - Listas {list_type.capitalize()}', fontsize=16)
+        
+        # Gráfico de tiempo
+        ax1.set_title('Tiempo de Ejecución')
+        ax1.set_xlabel('Tamaño de la lista (elementos)')
+        ax1.set_ylabel('Tiempo promedio (s)')
+        ax1.set_xscale('log')
+        ax1.set_yscale('log')
+        ax1.grid(True, which="both", ls="--")
+        
+        # Configurar eje X para comenzar desde 10^2
+        ax1.set_xlim(10**1.8, 10**5.2)  # Límites de 100 a 100,000
+        ax1.grid(True, which="both", ls="--")
+        
+        # Gráfico de memoria
+        ax2.set_title('Memoria Utilizada')
+        ax2.set_xlabel('Tamaño de la lista (elementos)')
+        ax2.set_ylabel('Memoria promedio (KB)')
+        ax2.set_xscale('log')
+        ax2.grid(True, which="both", ls="--")
+        
+        # Configurar eje X para comenzar desde 10^2
+        ax2.set_xlim(10**1.8, 10**5.2)
+        ax2.grid(True, which="both", ls="--")
+        
+        # Para cada algoritmo, trazar sus datos
+        for algo, color in zip(available_algorithms, colors):
+            if list_type in results[algo]:
+                # Preparar datos para este algoritmo
+                x = []
+                y_time = []
+                y_err_time = []
+                y_memory = []
+                y_err_memory = []
+                
+                for size in sizes:
+                    if size in results[algo][list_type]:
+                        x.append(size)
+                        y_time.append(results[algo][list_type][size]['avg_time'])
+                        y_err_time.append(results[algo][list_type][size]['std_time'])
+                        y_memory.append(results[algo][list_type][size]['avg_memory_kb'])
+                        y_err_memory.append(results[algo][list_type][size]['std_memory_kb'])
+                
+                if x:  # Solo si hay datos para este tipo de lista
+                    # Gráfico de tiempo
+                    ax1.errorbar(x, y_time, yerr=y_err_time, label=algo, color=color, 
+                                marker='o', linestyle='-', linewidth=2, markersize=8, capsize=5)
+                    
+                    # Gráfico de memoria
+                    ax2.errorbar(x, y_memory, yerr=y_err_memory, label=algo, color=color, 
+                                marker='s', linestyle='--', linewidth=2, markersize=8, capsize=5)
+        
+        # Añadir leyenda solo una vez
+        ax1.legend()
+        ax2.legend()
+        
+        plt.tight_layout()
+        plt.show()
+    
+    # =====================================================================
+    # Gráficos por tamaño de lista
+    # =====================================================================
+    for size in sizes:
+        # Verificar si al menos un algoritmo tiene datos para este tamaño
+        has_data = any(size in results[algo].get(list_type, {}) 
+            for algo in available_algorithms 
+            for list_type in list_types
+        )
+        
+        if not has_data:
+            continue  # Saltar tamaños sin datos
+        
+        # Crear figura con subgráficos para tiempo y memoria
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+        fig.suptitle(f'Comparación de Algoritmos - Tamaño {size} elementos', fontsize=16)
+        
+        # Gráfico de tiempo
+        ax1.set_title('Tiempo de Ejecución')
+        ax1.set_xlabel('Tipo de lista')
+        ax1.set_ylabel('Tiempo promedio (s)')
+        ax1.grid(True, which="both", ls="--")
+        
+        # Gráfico de memoria
+        ax2.set_title('Memoria Utilizada')
+        ax2.set_xlabel('Tipo de lista')
+        ax2.set_ylabel('Memoria promedio (KB)')
+        ax2.grid(True, which="both", ls="--")
+        
+        # Para cada tipo de lista, trazar datos de todos los algoritmos
+        for i, list_type in enumerate(list_types):
+            # Preparar posiciones en el eje X para este tipo de lista
+            x_pos = i * (len(available_algorithms) + 1) + np.arange(len(available_algorithms))
+            
+            # Para cada algoritmo
+            for j, algo in enumerate(available_algorithms):
+                if list_type in results[algo] and size in results[algo][list_type]:
+                    data = results[algo][list_type][size]
+                    
+                    # Gráfico de tiempo
+                    ax1.bar(x_pos[j], data['avg_time'], color=colors[j], 
+                            yerr=data['std_time'], capsize=5, label=algo if i == 0 else "")
+                    
+                    # Gráfico de memoria
+                    ax2.bar(x_pos[j], data['avg_memory_kb'], color=colors[j], 
+                            yerr=data['std_memory_kb'], capsize=5, label=algo if i == 0 else "")
+        
+        # Configurar ejes X
+        ax1.set_xticks((np.arange(len(list_types)) * (len(available_algorithms) + 1)) + 
+                      (len(available_algorithms) - 1) / 2)
+        ax1.set_xticklabels([t.capitalize() for t in list_types])
+        
+        ax2.set_xticks((np.arange(len(list_types)) * (len(available_algorithms) + 1)) + 
+                      (len(available_algorithms) - 1) / 2)
+        ax2.set_xticklabels([t.capitalize() for t in list_types])
+        
+        # Añadir leyenda solo una vez
+        ax1.legend()
+        ax2.legend()
+        
+        plt.tight_layout()
+        plt.show()
+
+
+    
+# Generar los gráficos
+plot_comparison_by_size_and_type(benchmark_results)
     
 # Generar los gráficos
 plot_benchmark_results(benchmark_results)
+plot_algorithms_by_size(benchmark_results, [100, 1000, 10000, 100000], ['random', 'sorted', 'reversed'])
