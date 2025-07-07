@@ -32,7 +32,7 @@ def plot_benchmark_results(results):
     sizes = [100, 1000, 10000, 100000]
     
     # Algoritmos a comparar (deberían coincidir con los del benchmark)
-    algorithms = ["BubbleSort","InsertionSort", "MergeSort", "QuickSort", "HeapSort", "TimSort"]
+    algorithms = ["MergeSort", "QuickSort", "HeapSort", "TimSort"]
     
     # Verificar qué algoritmos están realmente en los resultados
     available_algorithms = [algo for algo in algorithms if algo in results]
@@ -282,22 +282,22 @@ if __name__ == "__main__":
         },
         "QuickSort": {
             "random": {
-                100: {"avg_time": 0.000241,"std_time": 0.000008,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
-                1000: {"avg_time": 0.013313,"std_time": 0.000754,"avg_memory_kb": 9.212891,"std_memory_kb": 0.10},
-                10000: {"avg_time": 0.204102,"std_time": 0.004140,"avg_memory_kb": 80.087891,"std_memory_kb": 0.12},
-                100000: {"avg_time": 2.670086,"std_time": 0.027827,"avg_memory_kb": 783.800781,"std_memory_kb": 0.06}
-                },
+                100: {"avg_time": 0.000166, "std_time": 0.000029, "avg_memory_kb": 0.859375 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.011089, "std_time": 0.000258, "avg_memory_kb": 9.140625 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.155275 , "std_time": 0.001894, "avg_memory_kb": 80.031250, "std_memory_kb": 0},
+                100000: {"avg_time": 2.051004, "std_time": 0.028696 , "avg_memory_kb": 783.656250, "std_memory_kb": 0}
+            },
             "sorted": {
-                100: {"avg_time": 0.000310,"std_time": 0.000027,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
-                1000: {"avg_time": 0.013939,"std_time": 0.000664,"avg_memory_kb": 9.089844,"std_memory_kb": 0.07},
-                10000: {"avg_time": 0.203219,"std_time": 0.006567,"avg_memory_kb": 80.111328,"std_memory_kb": 0.10},
-                100000: {"avg_time": 2.580608,"std_time": 0.064566,"avg_memory_kb": 783.839844,"std_memory_kb": 0.10}
+                100: {"avg_time": 0.000145, "std_time": 0.000003, "avg_memory_kb": 0.859375 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.009682, "std_time": 0.000333, "avg_memory_kb": 8.500000 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.143817 , "std_time": 0.000952, "avg_memory_kb": 79.046875, "std_memory_kb": 0},
+                100000: {"avg_time": 1.896959, "std_time": 0.003120 , "avg_memory_kb": 782.375000, "std_memory_kb": 0}
             },
             "reversed": {
-                100: {"avg_time": 0.000242,"std_time": 0.000033,"avg_memory_kb": 0.859375,"std_memory_kb": 0.0},
-                1000: {"avg_time": 0.012937,"std_time": 0.000391,"avg_memory_kb": 9.181641,"std_memory_kb": 0.11},
-                10000: {"avg_time": 0.199857,"std_time": 0.004612,"avg_memory_kb": 80.164062,"std_memory_kb": 0.11},
-                100000: {"avg_time": 2.570012,"std_time": 0.062668,"avg_memory_kb": 783.833984,"std_memory_kb": 0.04}
+                100: {"avg_time": 0.000140, "std_time": 0.000001, "avg_memory_kb": 0.859375 , "std_memory_kb": 0},
+                1000: {"avg_time": 0.010890, "std_time": 0.000246, "avg_memory_kb": 8.687500 , "std_memory_kb": 0},
+                10000: {"avg_time": 0.158395  , "std_time": 0.003626, "avg_memory_kb": 79.250000, "std_memory_kb": 0},
+                100000: {"avg_time": 1.926926, "std_time": 0.012671 , "avg_memory_kb": 782.671875, "std_memory_kb": 0}
             }
         },
         "HeapSort": {
